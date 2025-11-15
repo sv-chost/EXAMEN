@@ -1,4 +1,4 @@
-# Nombre del flujo de trabajo: Snyk Dependency Scan for Maven
+# # Nombre del flujo de trabajo: Snyk Dependency Scan for Maven
 name: Snyk Dependency Scan (Maven)
 
 on:
@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write # Permiso necesario para subir el reporte SARIF
+  security-events: write 
 
 jobs:
   snyk_dependency_scan:
@@ -15,22 +15,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ➡️ PASO CRÍTICO AÑADIDO: Configurar el entorno de Java/JDK
+      # PASO CRÍTICO: Configurar el entorno de Java/JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17' # Versión común para Spring Boot/Maven
+          java-version: '17' 
           distribution: 'temurin'
           cache: 'maven'
 
       - name: Run Snyk to check for vulnerabilities (Dependencies)
-        # Usamos 'snyk/actions/maven' porque escanea las dependencias de Maven
-        uses: snyk/actions/maven@v2 
-        continue-on-error: true # Permite que se suba el SARIF incluso si falla el escaneo
+        # 🚨 CORRECCIÓN: Volvemos a usar @master para evitar el error 'unable to find version'
+        uses: snyk/actions/maven@master 
+        continue-on-error: true 
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          # Añadimos --all-projects para asegurarnos de escanear todo el proyecto Maven
           args: --all-projects --sarif-file-output=snyk.sarif 
           
       - name: Upload SARIF report to GitHub Code Scanning
