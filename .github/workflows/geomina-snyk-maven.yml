@@ -1,39 +1,55 @@
-# Nombre del flujo de trabajo: Snyk Dependency Scan for Maven
 name: Snyk Dependency Scan (Maven)
 
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
   security-events: write 
+  actions: read
 
 jobs:
   snyk_dependency_scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      # PASO CRÍTICO: Configurar el entorno de Java/JDK
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17' 
           distribution: 'temurin'
           cache: 'maven'
-
-      - name: Run Snyk to check for vulnerabilities (Dependencies)
-        # Se usa @master para mayor compatibilidad.
+      
+      - name: Build with Maven (optional but recommended)
+        run: mvn clean install -DskipTests
+        continue-on-error: true
+      
+      - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/maven@master 
         continue-on-error: true 
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          # ESTA ES LA CORRECCIÓN: Se indica a Snyk que genere el archivo SARIF
-          args: --all-projects --sarif-file-output=snyk.sarif 
+          args: --severity-threshold=low --all-projects --sarif-file-output=snyk.sarif
+      
+      - name: Check if SARIF file exists
+        run: |
+          if [ -f snyk.sarif ]; then
+            echo "✅ SARIF file generated successfully"
+            cat snyk.sarif
+          else
+            echo "❌ SARIF file not found"
+          fi
           
       - name: Upload SARIF report to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
         # Advertencia: Esta acción (CodeQL v3) está por ser deprecada.
         uses: github/codeql-action/upload-sarif@v3
         with:
