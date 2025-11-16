@@ -1,3 +1,4 @@
+# examen
 FROM eclipse-temurin:17
 
 # Crear usuario/grupo no-root con UID/GID numéricos
@@ -20,5 +21,6 @@ ENTRYPOINT ["java","-jar","/app/app.jar"]
 #WORKDIR /app
 #COPY target/*.jar app.jar
 #ENTRYPOINT ["java", "-jar", "app.jar"]
+
 
 
