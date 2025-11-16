@@ -1,56 +1,23 @@
-name: Snyk Dependency Scan (Maven)
-
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+name: Example workflow for Maven using Snyk
+on: push
 
 permissions:
   contents: read
-  security-events: write 
-  actions: read
+  security-events: write
 
 jobs:
-  snyk_dependency_scan:
+  security:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17' 
-          distribution: 'temurin'
-          cache: 'maven'
-      
-      - name: Build with Maven (optional but recommended)
-        run: mvn clean install -DskipTests
-        continue-on-error: true
-      
+      - uses: actions/checkout@master
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/maven@master 
-        continue-on-error: true 
+        uses: snyk/actions/maven@master
+        continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=low --all-projects --sarif-file-output=snyk.sarif
-      
-      - name: Check if SARIF file exists
-        run: |
-          if [ -f snyk.sarif ]; then
-            echo "✅ SARIF file generated successfully"
-            cat snyk.sarif
-          else
-            echo "❌ SARIF file not found"
-          fi
-          
-      - name: Upload SARIF report to GitHub Code Scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: snyk.sarif
-        # Advertencia: Esta acción (CodeQL v3) está por ser deprecada.
+          args: --sarif-file-output=snyk.sarif
+      - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk.sarif
